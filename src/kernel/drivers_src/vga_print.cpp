@@ -54,6 +54,8 @@ void clear_row(const size_t row) {
     }
 }
 
+void update_cursor(const int row, const int col);
+
 void print_newline() {
     Char* buffer = reinterpret_cast<Char*>(VGA_ADDRESS);
 
@@ -74,6 +76,7 @@ void print_newline() {
 
         clear_row(NUM_ROWS - 1);
     }
+    update_cursor(row, col);
 
 }
 
@@ -189,7 +192,7 @@ void error(const char print_object) {
     print_char(print_object);
 
     // Halting CPU one time
-    asm volatile ("hlt");
+    asm ("hlt");
     print_set_color(PRINT_COLOR_CYAN, PRINT_COLOR_BLUE);
 }
 
@@ -199,7 +202,7 @@ void error(const char* print_object) {
     print_str(print_object);
 
     // Halting CPU one time
-    asm volatile ("hlt");
+    asm ("hlt");
     print_set_color(PRINT_COLOR_CYAN, PRINT_COLOR_BLUE);
 }
 
@@ -209,7 +212,7 @@ void error(const uint32_t print_object) {
     print_hex(print_object);
 
     // Halting CPU one time
-    asm volatile ("hlt");
+    asm ("hlt");
     print_set_color(PRINT_COLOR_CYAN, PRINT_COLOR_BLUE);
 }
 
@@ -230,7 +233,7 @@ void backspace() {
         // Decrementing column variable
         col--;
         // If it gets bellow 0
-        if(col < 0) {
+        if(col <= 0) {
             row--;
             col = NUM_COLS;
         }

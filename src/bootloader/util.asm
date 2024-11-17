@@ -11,6 +11,7 @@
 
 section .boot
     global print_str_realmode
+    global print_string_pm
 
 print_str_realmode:
     .next_char:

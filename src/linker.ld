@@ -21,7 +21,6 @@ SECTIONS
     . = 0x100000;
     __kernelreal_diff = . - REAL_BASE; /* Difference to kernel from real mode */
 
-    
 
     /* Kernel sections */
     .text : AT(ADDR(.text) - __kernelreal_diff) ALIGN(4096)

@@ -13,6 +13,7 @@
 #include <drivers/vga_print.hpp>
 #include <drivers/keyboard.hpp>
 #include <idt.hpp>
+#include <pit.hpp>
 #include <gdt.hpp>
 
 #include <stdint.h>
@@ -23,7 +24,8 @@ extern "C" void kernel_main() {
     vga::init(); // VGA text
     gdt::init(); // Global Descriptor Table
     idt::init(); // Interrupt Descriptor Table
-    keyboard::init();
+    pit::init(); // Programmable Interval Timer
+    keyboard::init(); // PS2 keyboard drivers
 
     #pragma endregion
 

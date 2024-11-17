@@ -15,20 +15,32 @@
 
 [BITS 16]
 
-section .boot
-    cpuid_supported db 0   ; Flag for CPUID support (0: not supported, 1: supported)
-    pci_supported db 0     ; Flag for PCI support (0: not supported, 1: supported)
-    msr_supported db 0     ; Flag for MSR support (0: not supported, 1: supported)
+section .data
+    memory_buffer resb 32 * 24 ; Reserving space for 32 entries
 
     ; Error messages
     cpuid_not_supported db 'CPUID not supported!', 0
     pci_not_supported db 'PCI not supported!', 0
     msr_not_supported db 'MSR not supported!', 0
 
+
+section .boot
+    cpuid_supported db 0   ; Flag for CPUID support (0: not supported, 1: supported)
+    pci_supported db 0     ; Flag for PCI support (0: not supported, 1: supported)
+    msr_supported db 0     ; Flag for MSR support (0: not supported, 1: supported)
+
+
+
     global check_hardware
+    global get_ram_amount
     extern print_str_realmode
+    extern print_string_pm
 
 check_hardware:
+
+    mov esi, cpuid_not_supported
+    call print_str_realmode
+
     ; Checking CPUID
     call check_cpuid
     ; Checking PCI
@@ -53,25 +65,25 @@ check_hardware:
 ; Prints error messages
 
 cpuid_n_supported:
-    mov si, cpuid_not_supported
+    mov esi, cpuid_not_supported
     call print_str_realmode
 
     hlt
-    ;jmp $
+    jmp $
 
 pci_n_supported:
-    mov si, pci_not_supported
+    mov esi, pci_not_supported
     call print_str_realmode
 
     hlt
-    ;jmp $
+    jmp $
 
 msr_n_supported:
-    mov si, msr_not_supported
+    mov esi, msr_not_supported
     call print_str_realmode
 
     hlt 
-    ;jmp $
+    jmp $
 
 
 check_cpuid:
@@ -124,3 +136,39 @@ check_msr:
 
 .no_msr:
     ret
+
+
+get_ram_amount:
+
+    xor ebx, ebx ; Zeroing ebx
+
+memory_loop:
+    mov eax, 0xE820        ; INT 0x15 E820 function
+    mov ecx, 24            ; Size of the structure (in bytes)
+    mov edx, 0x534D4150    ; 'SMAP' identifier, thi is needed to recognize it as a memory map request 
+
+    ; Calculate the address of buffer + ebx * 24 in esi
+    mov esi, memory_buffer      ; Load base address of buffer into ESI
+    mov edi, esi           ; Copy buffer's address into EDI
+    add edi, ebx           ; Add ebx (index) to edi
+    shl edi, 3             ; Multiply index by 8 (to achieve ebx * 24 addressing)
+
+    int 0x15               ; BIOS call for memory map
+    jc end_loop            ; If carry flag is set, no more entries
+
+    ; Check if this entry is usable memory
+
+    
+    cmp dword [edi], 1  ; Check if "type" is 1
+    jne skip_entry
+    ; If type is 1, add the memory size to a total (in another register)
+    ; (example code for summing size omitted here)
+
+skip_entry:
+    inc ebx                ; Move to the next entry
+    jmp memory_loop
+
+end_loop:
+    ; End of memory map retrieval
+    mov esi, memory_buffer     ; Address of memory buffer to print
+    call print_str_realmode   ; Print the memory buffer (if relevant)

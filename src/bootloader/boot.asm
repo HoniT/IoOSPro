@@ -14,6 +14,7 @@
 section .boot
 
     extern check_hardware
+    extern get_ram_amount
     extern gdt_descriptor
     extern _start
     extern print_str_realmode
@@ -59,6 +60,8 @@ start:
 
     ; Checking hardware
     call check_hardware
+    ; Getting usable RAM amount
+    call get_ram_amount
 
     ; Enabling A20
     call init_a20
@@ -182,7 +185,7 @@ protected_mode_init:
     mov ss, ax
 
     ; Set up stack pointer in protected mode
-    mov ebp, 0x9C00
+    mov ebp, 0x7C00
     mov esp, ebp
 
 
