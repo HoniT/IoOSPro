@@ -9,4 +9,4 @@ make clean
 make all
 
 # Running QEMU
-qemu-system-i386 -drive file=bin/io_os.bin,format=raw
+qemu-system-i386 -m 7G -drive file=bin/io_os.bin,format=raw

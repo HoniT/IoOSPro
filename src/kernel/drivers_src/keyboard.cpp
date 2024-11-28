@@ -10,7 +10,7 @@
 #include <drivers/keyboard.hpp>
 #include <utils/ports.hpp>
 #include <drivers/vga_print.hpp>
-#include <idt.hpp>
+#include <idt/idt.hpp>
 
 using namespace ports;
 using namespace keyboard;

@@ -9,10 +9,11 @@
 // Setting up IDT gates, ISR handlers, IRQ handlers, error messages ...
 // =======================================================================
 
-#include <idt.hpp>
+#include <idt/idt.hpp>
 #include <utils/util.hpp>
 #include <utils/ports.hpp> 
 #include <drivers/vga_print.hpp>
+#include <idt/kernel_panic.hpp>
 
 using ports::outPortB;
 
@@ -126,7 +127,7 @@ void idt::setIdtGate(const uint8_t num, const uint32_t base, const uint16_t sele
 
 
 // Exeption messages
-const char* exception_messages[] = {
+const char* idt::exception_messages[] = {
     "Division By Zero",
     "Debug",
     "Non Maskable Interrupt",
@@ -166,18 +167,7 @@ const char* exception_messages[] = {
 extern "C" void isr_handler(struct InterruptRegisters* regs) {
 
     if(regs->interr_no < 32) {
-        vga::print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_CYAN);
-        vga::print_clear();
-
-        vga::printf(exception_messages[regs->interr_no]);
-        vga::printf("\nException! system Halted\n");
-
-        asm volatile ("cli");
-        while(true) { // Infinite loop
-            // Halting CPU to stop further damage
-            asm volatile ("hlt");
-        }
-        return;
+        kernel_panic(regs->interr_no);
     }
 }
 

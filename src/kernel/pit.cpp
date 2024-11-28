@@ -9,7 +9,7 @@
 
 #include <pit.hpp>
 #include <utils/ports.hpp>
-#include <idt.hpp>
+#include <idt/idt.hpp>
 
 volatile uint64_t ticks;
 const uint32_t frequency = 100;

@@ -46,6 +46,8 @@ extern "C" void irq_uninstall_handler(int irq_num);
 // This will frow an ISR. If it successfully throws an ISR that means it works
 void test_isr();
 
+extern const char* exception_messages[];
+
 } // Namespace idt
 
 extern "C" void isr_handler(struct InterruptRegisters* regs);

@@ -12,20 +12,26 @@
 #include <kernel_main.hpp>
 #include <drivers/vga_print.hpp>
 #include <drivers/keyboard.hpp>
-#include <idt.hpp>
+#include <idt/idt.hpp>
 #include <pit.hpp>
 #include <gdt.hpp>
+#include <memory/physical/pmm.hpp>
 
-#include <stdint.h>
 
 extern "C" void kernel_main() {
     #pragma region Initialization
 
     vga::init(); // VGA text
+
     gdt::init(); // Global Descriptor Table
     idt::init(); // Interrupt Descriptor Table
+
+    // Drivers
     pit::init(); // Programmable Interval Timer
     keyboard::init(); // PS2 keyboard drivers
+
+    // Memory managers
+    pmm::init();
 
     #pragma endregion
 

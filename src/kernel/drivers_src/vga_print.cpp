@@ -155,6 +155,16 @@ void print_hex(const uint32_t num) {
     }
 }
 
+void print_hex_64bit(const uint64_t num) {
+    print_str("0x"); // Prefix for hex numbers
+
+    // Print each nibble (4 bits) as a hex digit
+    for (int i = 15; i >= 0; i--) {
+        uint8_t nibble = (num >> (i * 4)) & 0xF;  // Extract the current nibble
+        print_char(nibble_to_hex(nibble));        // Print the corresponding hex digit
+    }
+}
+
 #pragma endregion
 
 // ====================
@@ -182,6 +192,10 @@ void printf(const char* print_object) {
 
 void printf(const uint32_t print_object) {
     print_hex(print_object);
+}
+
+void printf(const uint64_t print_object) {
+    print_hex_64bit(print_object);
 }
 
 // Error functions

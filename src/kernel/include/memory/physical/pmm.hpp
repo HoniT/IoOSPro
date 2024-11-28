@@ -21,6 +21,9 @@ namespace pmm {
     void* block_malloc(); // Allocates a block of physical memory
     void block_free(const uint32_t address); // Frees a block of physical memory
 
+    extern uint64_t usable_ram_amount;
+    extern uint64_t num_blocks;
+
 } // Namespace pmm
 
 #endif // PMM_HPP

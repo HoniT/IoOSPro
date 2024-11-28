@@ -47,6 +47,7 @@ void init(); // Initializes VGA text
 void printf(const char print_object);
 void printf(const char* print_object);
 void printf(const uint32_t print_object);
+void printf(const uint64_t print_object);
 
 // Error messages
 void error(const char print_object);

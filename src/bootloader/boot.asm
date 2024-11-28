@@ -14,7 +14,7 @@
 section .boot
 
     extern check_hardware
-    extern get_ram_amount
+    extern get_mmap
     extern gdt_descriptor
     extern _start
     extern print_str_realmode
@@ -57,18 +57,16 @@ start:
 
     sti ; Enabling interrupts
 
-
     ; Checking hardware
-    call check_hardware
-    ; Getting usable RAM amount
-    call get_ram_amount
+    call check_hardware ; Validates PCI, MSRs and CPUID
+    ; Getting the memory map for the RAM
+    call get_mmap
 
     ; Enabling A20
     call init_a20
 
     ; Loading GDT
     lgdt [gdt_descriptor]
-
 
 
     ; Loading kernel using CHS

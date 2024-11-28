@@ -7,17 +7,11 @@
 
 #pragma once
 
-#ifndef MALLOC_HPP
-#define MALLOC_HPP
+#ifndef KERNEL_PANIC_HPP
+#define KERNEL_PANIC_HPP
 
-#include <stddef.h>
+#include <stdint.h>
 
-namespace pmm {
+void kernel_panic(const uint32_t error_index);
 
-constexpr size_t align_up(size_t value, size_t alignment);
-void* legacy_malloc(size_t size);
-void init_heap();
-
-} // namespace pmm
-
-#endif // MALLOC_HPP
+#endif // KERNEL_PANIC_HPP

@@ -9,166 +9,140 @@
 ; Checking the presence of PCI, CPUID, MSRs and gets hardware information
 ; =======================================================================
 
+
+; Global symbols
+ global check_hardware
+ global get_mmap
+
+section .boot
+
+[BITS 16] ; Real mode
+
+ ;Memory descriptor returned by INT 15 
+ global mmap_ent
+ mmap_ent equ 0x8000             ; the number of entries will be stored at 0x8000
+
+
 ; ====================
 ; Checking the presence of PCI, CPUID, MSRs
 ; ====================
 
-[BITS 16]
-
-section .data
-    memory_buffer resb 32 * 24 ; Reserving space for 32 entries
-
-    ; Error messages
-    cpuid_not_supported db 'CPUID not supported!', 0
-    pci_not_supported db 'PCI not supported!', 0
-    msr_not_supported db 'MSR not supported!', 0
-
-
-section .boot
-    cpuid_supported db 0   ; Flag for CPUID support (0: not supported, 1: supported)
-    pci_supported db 0     ; Flag for PCI support (0: not supported, 1: supported)
-    msr_supported db 0     ; Flag for MSR support (0: not supported, 1: supported)
-
-
-
-    global check_hardware
-    global get_ram_amount
-    extern print_str_realmode
-    extern print_string_pm
-
 check_hardware:
-
-    mov esi, cpuid_not_supported
-    call print_str_realmode
-
-    ; Checking CPUID
+    ; Check CPUID
     call check_cpuid
-    ; Checking PCI
+    ; Check PCI
     call check_pci
-    ; Checking MSRs
+    ; Check MSR
     call check_msr
-
-
-    ; Checking if anything is not supported
-    cmp byte [cpuid_supported], 0 ; Check if cpuid_supported is 1
-        je cpuid_n_supported            ; Jump if CPUID is not supported
-
-    cmp byte [pci_supported], 0 ; Check if pci_supported is 1
-        je pci_n_supported            ; Jump if PCI is not supported
-
-    cmp byte [msr_supported], 0 ; Check if msr_supported is 1
-        je msr_n_supported            ; Jump if MSR is not supported
 
     ret
 
+check_cpuid:
+    pushfd ; Saving EFLAGS
 
-; Prints error messages
+    pop eax
+    xor eax, 0x200000
+    push eax
+    popfd
+    pushfd
+    pop eax
 
-cpuid_n_supported:
-    mov esi, cpuid_not_supported
-    call print_str_realmode
+    test eax, 0x200000
+    jz .no_cpuid
+    ret
 
-    hlt
+.no_cpuid:
+    hlt 
     jmp $
 
-pci_n_supported:
-    mov esi, pci_not_supported
-    call print_str_realmode
+check_pci:
+    mov eax, 0x80000000
+    mov dx, 0xCF8
+    out dx, eax
+    mov dx, 0xCFC
+    in eax, dx
 
-    hlt
+    cmp ax, 0xFFFF
+    jz .no_pci
+    ret
+
+.no_pci:
+    hlt 
     jmp $
 
-msr_n_supported:
-    mov esi, msr_not_supported
-    call print_str_realmode
+check_msr:
+    mov eax, 1
+    cpuid
+    
+    test edx, 0x20
+    jz .no_msr
+    ret
 
+.no_msr:
     hlt 
     jmp $
 
 
-check_cpuid:
-    pushfd                    ; Save EFLAGS to stack
-    pop eax                   ; Move EFLAGS to EAX
-
-    mov ecx, eax              ; Copy EFLAGS
-    xor eax, 0x200000         ; Toggle ID bit (21st bit)
-
-    push eax                  ; Set the new EFLAGS
-    popfd                     ; Load back to EFLAGS
-    pushfd                    ; Save EFLAGS again
-    pop eax                   ; Move it to EAX
-    xor eax, ecx              ; Compare with original EFLAGS
-    jz .no_cpuid              ; If ID bit didn’t toggle, CPUID is not supported
-
-    mov byte [cpuid_supported], 1 ; CPUID is supported
-    ret
-
-.no_cpuid:
-    ret
-
-check_pci:
-    mov eax, 0x80000000       ; Bus 0, device 0, function 0
-    mov dx, 0xCF8             ; PCI configuration address port
-    out dx, eax               ; Write to the PCI configuration space
-    mov dx, 0xCFC             ; PCI configuration data port
-    in eax, dx                ; Read the vendor ID from PCI config data port
-    cmp ax, 0xFFFF            ; Check if vendor ID is 0xFFFF
-    je .no_pci                ; If vendor ID is 0xFFFF, no PCI support
-
-    mov byte [pci_supported], 1 ; PCI is supported
-    ret
-
-.no_pci:
-    ret
-
-check_msr:
-    ; Ensure CPUID is supported before checking MSR
-    cmp byte [cpuid_supported], 0
-    je .no_msr                ; Skip if CPUID is not supported
-
-    mov eax, 1                ; CPUID function 1
-    cpuid
-    test edx, (1 << 5)        ; Check if the 5th bit of EDX is set
-    jz .no_msr                ; If not set, MSR is not supported
-
-    mov byte [msr_supported], 1 ; MSR is supported
-    ret
-
-.no_msr:
-    ret
 
 
-get_ram_amount:
+; ====================
+; Getting usable RAM amount
+; ====================
 
-    xor ebx, ebx ; Zeroing ebx
 
-memory_loop:
-    mov eax, 0xE820        ; INT 0x15 E820 function
-    mov ecx, 24            ; Size of the structure (in bytes)
-    mov edx, 0x534D4150    ; 'SMAP' identifier, thi is needed to recognize it as a memory map request 
+get_mmap:
+    mov di, 0x8004          ; Set di to 0x8004. Otherwise this code will get stuck in `int 0x15` after some entries are fetched 
+	xor ebx, ebx		    ; ebx must be 0 to start
+	xor bp, bp		        ; Keep an entry count in bp
+	mov edx, 0x534D4150	    ; Place "SMAP" into edx
+	mov eax, 0xE820
 
-    ; Calculate the address of buffer + ebx * 24 in esi
-    mov esi, memory_buffer      ; Load base address of buffer into ESI
-    mov edi, esi           ; Copy buffer's address into EDI
-    add edi, ebx           ; Add ebx (index) to edi
-    shl edi, 3             ; Multiply index by 8 (to achieve ebx * 24 addressing)
+	mov [es:di + 20], DWORD 1	; Force a valid ACPI 3.X entry
+	mov ecx, 24		        ; Ask for 24 bytes
+	int 0x15
+	jc short .failed	    ; Carry set on first call means "unsupported function"
+	mov edx, 0x534D4150	    ; Some BIOSes apparently trash this register?
 
-    int 0x15               ; BIOS call for memory map
-    jc end_loop            ; If carry flag is set, no more entries
+	cmp eax, edx		    ; On success, eax must have been reset to "SMAP"
+	jne short .failed
 
-    ; Check if this entry is usable memory
+	test ebx, ebx		    ; ebx = 0 implies list is only 1 entry long (worthless)
+	je short .failed
 
+	jmp short .jmpin
+
+.e820lp:
+	mov eax, 0xE820		    ; eax, ecx get trashed on every int 0x15 call
+	mov [es:di + 20], DWORD 1	; Force a valid ACPI 3.X entry
+	mov ecx, 24		        ; Ask for 24 bytes again
+	int 0x15
+	jc short .e820f		    ; Carry set means "end of list already reached"
+	mov edx, 0x534D4150	    ; Repair potentially trashed register
+
+.jmpin:
+	jcxz .skipent		    ; Skip any 0 length entries
+	cmp cl, 20		        ; Got a 24 byte ACPI 3.X response?
+	jbe short .notext
+	test byte [es:di + 20], 1	; If so: is the "ignore this data" bit clear?
+	je short .skipent
     
-    cmp dword [edi], 1  ; Check if "type" is 1
-    jne skip_entry
-    ; If type is 1, add the memory size to a total (in another register)
-    ; (example code for summing size omitted here)
+.notext:
+	mov ecx, [es:di + 8]	; Get lower uint32_t of memory region length
+	or ecx, [es:di + 12]	; "or" it with upper uint32_t to test for zero
+	jz .skipent		        ; If length uint64_t is 0, skip entry
+	inc bp			        ; Got a good entry: ++count, move to next storage spot
+	add di, 24
 
-skip_entry:
-    inc ebx                ; Move to the next entry
-    jmp memory_loop
+.skipent:
+	test ebx, ebx		    ; If ebx resets to 0, list is complete
+	jne short .e820lp
 
-end_loop:
-    ; End of memory map retrieval
-    mov esi, memory_buffer     ; Address of memory buffer to print
-    call print_str_realmode   ; Print the memory buffer (if relevant)
+.e820f:
+	mov [es:mmap_ent], bp	; Store the entry count
+
+	clc			            ; There is "jc" on end of list to this point, so the carry must be cleared
+	ret
+
+.failed: ; Infinite loop
+	hlt
+    jmp $
