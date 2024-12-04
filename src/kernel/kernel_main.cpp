@@ -37,4 +37,11 @@ extern "C" void kernel_main() {
 
     // Only uncomment if you want to test the ISR
     // idt::test_isr();
+
+    #pragma region Testing
+
+    pmm::test_pmm();
+    pit::test();
+
+    #pragma endregion
 }

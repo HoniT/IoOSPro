@@ -15,14 +15,22 @@
 #define BLOCK_SIZE 4096 // 4KiB
 #define TOTAL_MEMORY
 
+
 namespace pmm {
     void init(); // Initializes the PMM
 
-    void* block_malloc(); // Allocates a block of physical memory
-    void block_free(const uint32_t address); // Frees a block of physical memory
+    // Allocates a block of physical memory
+    uint32_t allocate_frame();
+    // Frees a block of physical memory
+    void free_frame(const uint32_t address);
+    // Testing the PMM allocation and deallocation functions
+    void test_pmm();
 
     extern uint64_t usable_ram_amount;
     extern uint64_t num_blocks;
+
+    // Start address of process data
+    const uint32_t data_start_address = 0x500000;
 
 } // Namespace pmm
 

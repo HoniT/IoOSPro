@@ -11,18 +11,6 @@
 
 #include <utils/util.hpp>
 
-// Returns the difference in two strings
-uint32_t strcmpr(const char* str1, const char* str2) {
-    // Iterate over both strings and compare characters one by one
-    while (*str1 && (*str1 == *str2)) {
-        // Incrementing indexes
-        str1++; str2++;
-    }
-    
-    // Return the difference between the first non-matching characters
-    return *(unsigned char*)str1 - *(unsigned char*)str2;
-}
-
 // Memset sets a block of memory to a specific value for a given number of bytes
 void memset(const void *dest, const char val, uint32_t count){
     char *temp = (char*) dest;

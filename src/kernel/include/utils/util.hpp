@@ -14,6 +14,5 @@
 
 // Functions defined in util.cpp
 void memset(const void *dest, const char val, uint32_t count);
-uint32_t strcmpr(const char* str1, const char* str2);
 
 #endif // UTIL_HPP

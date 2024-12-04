@@ -20,6 +20,8 @@ IoOS is a simple operating system designed for testing and educational reasons.
     ```
 
 2. Install dependencies:
+    For Windows users it is better to download WSL (Windows Subsystem for Linux) so you can use linux commands!
+
     - On Linux:
         Installing QEMU
         ``` bash

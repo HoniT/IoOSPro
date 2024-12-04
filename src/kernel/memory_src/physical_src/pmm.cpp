@@ -19,7 +19,7 @@ uint64_t pmm::usable_ram_amount = 0; // Total usable RAM
 uint64_t pmm::num_blocks = 0; // Total amount of blocks for the PMM
 size_t bitmap_size;
 
-uint64_t* mem_bitmap = nullptr;
+uint64_t* frame_bitmap = nullptr;
 
 #pragma region Initialization
 
@@ -54,31 +54,84 @@ void pmm::init() {
     // Calculate number of blocks and allocate the bitmap
     pmm::num_blocks = pmm::usable_ram_amount / BLOCK_SIZE;
     bitmap_size = (pmm::num_blocks + 63) / 64; // Number of uint64_t elements needed
-    mem_bitmap = reinterpret_cast<uint64_t*>(pmm::legacy_malloc(bitmap_size * sizeof(uint64_t)));
+    frame_bitmap = reinterpret_cast<uint64_t*>(pmm::legacy_malloc(bitmap_size * sizeof(uint64_t)));
 
     // Error handling
-    if (!mem_bitmap) {
-        vga::error("Failed to allocate mem_bitmap!\n");
+    if (!frame_bitmap) {
+        vga::error("Failed to allocate frame_bitmap!\n");
         return;
     }
 
     // Zero-initialize the bitmap
-    for (size_t i = 0; i < bitmap_size; i++) {
-        mem_bitmap[i] = 0;
-    }
-
+    memset(frame_bitmap, 0, bitmap_size);
+    
     vga::printf("PMM initialized successfully!\n");
+}
+
+
+/* Returns true if free
+ * Returns false if being used */
+bool is_block_free(const uint32_t address) {
+    return !(frame_bitmap[address / 64] & (uint64_t(1) << (address % 64)));
+}
+
+// Noting that the specific block has been allocated
+void set_block_allocated(const uint32_t block_number) {
+    // This performes a bitwise OR and modifies the lvalue
+    frame_bitmap[block_number / 64] |= (uint64_t(1) << (block_number % 64));
+}
+
+// Noting that the specific block has been freed
+void set_block_free(const uint32_t block_number) {
+    // This performes a bitwise AND and modifies the lvalue
+    frame_bitmap[block_number / 64] &= ~(uint64_t(1) << (block_number % 64)); 
 }
 
 #pragma endregion
 #pragma region Block Handling
 
-void* pmm::block_malloc() {
+uint32_t pmm::allocate_frame() {
+    // Itterating through all of the blocks untill we find an available one
+    for(uint64_t i = 0; i < pmm::num_blocks; i++) {
+        if(is_block_free(i)) {
+            // Allocating and returning address
+            set_block_allocated(i);
 
+            return (i * BLOCK_SIZE + pmm::data_start_address);
+        }
+    }
+
+    // Error: no more memory!
+    vga::error("No more free memory to allocate frame!\n");
+    return -1;
 }
 
-void pmm::block_free(const uint32_t address) {
+void pmm::free_frame(const uint32_t address) {
+    // Converting the addres into a block index and setting it to allocated
+    set_block_free((address - pmm::data_start_address) / BLOCK_SIZE);
+}
 
+void pmm::test_pmm() {
+    // Block 1
+    uint32_t block1 = allocate_frame();
+    vga::printf("Block 1: ");
+    vga::printf(block1);
+    vga::printf('\n');
+
+    // Block2
+    uint32_t block2 = allocate_frame();
+    vga::printf("Block 2: ");
+    vga::printf(block2);
+    vga::printf('\n');
+
+    // Freeing Block 1
+    free_frame(block1);
+
+    // Allocating Block 3 after freeing
+    uint32_t block3 = allocate_frame();
+    vga::printf("Block 3: ");
+    vga::printf(block3);
+    vga::printf('\n');
 }
 
 #pragma endregion

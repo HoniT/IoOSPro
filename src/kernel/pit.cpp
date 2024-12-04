@@ -10,6 +10,7 @@
 #include <pit.hpp>
 #include <utils/ports.hpp>
 #include <idt/idt.hpp>
+#include <drivers/vga_print.hpp>
 
 volatile uint64_t ticks;
 const uint32_t frequency = 100;
@@ -32,4 +33,22 @@ void pit::init() {
     ports::outPortB(0x40,(uint8_t)(divisor & 0xFF));
     ports::outPortB(0x40,(uint8_t)((divisor >> 8) & 0xFF));
 
+}
+
+void pit::delay(uint64_t ms) {
+    // A simple delay that waits for `ms` milliseconds (approximated)
+    uint32_t start = ticks;
+    uint64_t targetTicks = start + ms;  // Target ticks to achieve the delay
+
+    // Wait until the target number of ticks has passed
+    while (ticks < targetTicks) {
+        // You could add a small NOP here if you want to reduce CPU usage slightly
+        __asm__("nop");
+    }
+}
+
+void pit::test() {
+    vga::printf("Starting timer\n");
+    pit::delay(300);
+    vga::printf("3 seconds have passed!\n");
 }

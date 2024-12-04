@@ -10,8 +10,13 @@
 #ifndef PIT_HPP
 #define PIT_HPP
 
+#include <stdint.h>
+
 namespace pit {
     void init(); // Initializes the PIT
+    void delay(uint64_t ms);
+    
+    void test();
 } // Namespace pit
 
 #endif // PIT_HPP
