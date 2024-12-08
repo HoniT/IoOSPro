@@ -18,9 +18,9 @@ section .boot
 
 [BITS 16] ; Real mode
 
- ;Memory descriptor returned by INT 15 
+ ; Memory descriptor returned by INT 15 
  global mmap_ent
- mmap_ent equ 0x8000             ; the number of entries will be stored at 0x8000
+ mmap_ent equ 0x8000             ; The number of entries will be stored at 0x8000
 
 
 ; ====================

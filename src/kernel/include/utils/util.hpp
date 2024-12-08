@@ -11,8 +11,10 @@
 #define UTIL_HPP
 
 #include <stdint.h>
+#include <stddef.h>
 
 // Functions defined in util.cpp
 void memset(const void *dest, const char val, uint32_t count);
+namespace pmm { constexpr size_t align_up(size_t value, size_t alignment); }
 
 #endif // UTIL_HPP

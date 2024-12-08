@@ -11,11 +11,12 @@
 #define MALLOC_HPP
 
 #include <stddef.h>
+#include <stdint.h>
 
 namespace pmm {
+// Heap allocation
+uint32_t legacy_malloc(size_t size);
 
-constexpr size_t align_up(size_t value, size_t alignment);
-void* legacy_malloc(size_t size);
 void init_heap();
 
 } // namespace pmm

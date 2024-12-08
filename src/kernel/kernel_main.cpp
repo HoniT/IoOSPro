@@ -16,6 +16,7 @@
 #include <pit.hpp>
 #include <gdt.hpp>
 #include <memory/physical/pmm.hpp>
+#include <memory/virtual/vmm.hpp>
 
 
 extern "C" void kernel_main() {
@@ -32,6 +33,7 @@ extern "C" void kernel_main() {
 
     // Memory managers
     pmm::init();
+    // vmm::init();
 
     #pragma endregion
 

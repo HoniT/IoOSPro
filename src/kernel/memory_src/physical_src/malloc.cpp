@@ -10,7 +10,8 @@
 #include <memory/physical/malloc.hpp>
 #include <memory/physical/pmm.hpp>
 #include <stdint.h>
-#include <drivers/vga_print.hpp> // Assume you have a VGA print function for debugging
+#include <drivers/vga_print.hpp>
+#include <utils/util.hpp>
 
 // Constants
 constexpr size_t HEAP_START = 0x200000; // Example heap start (2 MB mark)
@@ -36,15 +37,15 @@ void pmm::init_heap() {
 }
 
 // Simple Malloc Implementation
-void* pmm::legacy_malloc(size_t size) {
+uint32_t pmm::legacy_malloc(size_t size) {
     size = align_up(size, 8); // Align to 8 bytes for safety
 
     if (!heap_start || heap_offset + size > heap_size) {
         vga::printf("Out of memory!\n");
-        return nullptr; // Out of memory
+        return -1; // Out of memory
     }
 
-    void* block = heap_start + heap_offset;
+    uint32_t block = uint32_t(heap_start) + heap_offset;
     heap_offset += size;
 
     return block;

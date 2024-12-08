@@ -16,7 +16,7 @@ IoOS is a simple operating system designed for testing and educational reasons.
 
 1. Clone the repository:
     ``` bash
-    git clone https://www.github.com/HoniT/IoOS
+    git clone https://www.github.com/HoniT/IoOSPro
     ```
 
 2. Install dependencies:
